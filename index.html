@@ -182,14 +182,28 @@ function log(message, error = false) {
     `bg-black border border-gray-800 rounded-2xl p-4 text-xs font-mono min-h-36 max-h-72 overflow-auto whitespace-pre-wrap ${error ? "text-red-400" : "text-emerald-400"}`;
 }
 
+function redirectToAccessLogin() {
+  const returnUrl = window.location.href;
+  window.location.assign(`${WORKER_URL}/login?return=${encodeURIComponent(returnUrl)}`);
+}
+
 async function api(path, options = {}) {
-  const res = await fetch(`${WORKER_URL}${path}`, {
-    ...options,
-    credentials: "include",
-    headers: {
-      ...(options.headers || {}),
-    },
-  });
+  let res;
+  try {
+    res = await fetch(`${WORKER_URL}${path}`, {
+      ...options,
+      credentials: "include",
+      headers: {
+        ...(options.headers || {}),
+      },
+    });
+  } catch (err) {
+    // An unauthenticated Cloudflare Access response is commonly blocked by CORS
+    // before JavaScript can inspect it. Navigate to the protected Worker instead;
+    // Access will show its login page, then /login sends us back here.
+    redirectToAccessLogin();
+    throw new Error("Redirecting to Cloudflare Access login…");
+  }
 
   const contentType = res.headers.get("content-type") || "";
   const text = await res.text();
@@ -202,9 +216,8 @@ async function api(path, options = {}) {
       data.includes("Cloudflare Access") ||
       data.includes("cloudflareaccess.com")
   )) {
-    throw new Error(
-      "Cloudflare Access login required. Open the Worker URL directly, sign in, then refresh this page. Also allow third-party cookies for the Worker if your browser blocks them."
-    );
+    redirectToAccessLogin();
+    throw new Error("Redirecting to Cloudflare Access login…");
   }
 
   if (!res.ok) {
