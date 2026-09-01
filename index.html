@@ -67,6 +67,7 @@
 
               <label class="label">Product</label>
               <select id="productSelect" class="field"></select>
+              <div id="ruleHint" class="text-xs text-gray-500 rounded-lg bg-gray-950 border border-gray-800 px-3 py-2">Select a product to see its limits.</div>
 
               <label class="label">Item type</label>
               <select id="itemTypeSelect" class="field"></select>
@@ -209,9 +210,8 @@ function renderOrders() {
 
   for (const order of state.orders) {
     const address = order.shippingAddress || {};
-    const weight = order.currentTotalWeight?.value
-      ? `${Number(order.currentTotalWeight.value).toFixed(2)} kg`
-      : "Weight n/a";
+    const grams = Number(order.currentTotalWeight || 0);
+    const weight = grams > 0 ? `${(grams / 1000).toFixed(2)} kg` : "Weight n/a";
 
     const el = document.createElement("button");
     el.className = "w-full text-left bg-gray-950 border border-gray-800 hover:border-amber-500 rounded-xl p-3 transition";
@@ -243,8 +243,8 @@ function selectOrder(order) {
   $("recEmail").value = order.email || "";
   $("recCountry").value = a.countryCodeV2 || "NO";
 
-  const weight = order.currentTotalWeight?.value;
-  $("weight").value = weight ? Number(weight).toFixed(2) : "";
+  const grams = Number(order.currentTotalWeight || 0);
+  $("weight").value = grams > 0 ? (grams / 1000).toFixed(3).replace(/0+$/, "").replace(/\.$/, "") : "";
 
   $("selectedOrderBadge").textContent = `${order.name} • ${a.name || "No recipient"}`;
   log(`Loaded ${order.name}. Review the address, product and parcel before shipping.`);
@@ -297,19 +297,44 @@ function selectedProduct() {
   );
 }
 
+function productGroup(product) {
+  const id = String(product?.identifier || "").toLowerCase();
+  const name = String(product?.name || "").toLowerCase();
+  if (id.includes("return") || name.includes("retur")) return "↩️ Returns";
+  if (product?.isB2B) return "🏢 Business shipping";
+  return "📦 Customer shipping";
+}
+
 function renderProducts() {
   const agreement = selectedAgreement();
   const select = $("productSelect");
   select.innerHTML = "";
 
+  const groups = new Map();
   for (const product of (agreement?.products || [])) {
-    const option = document.createElement("option");
-    option.value = product.identifier;
-    option.textContent = product.name ? `${product.name} (${product.identifier})` : product.identifier;
-    select.appendChild(option);
+    const groupName = productGroup(product);
+    if (!groups.has(groupName)) groups.set(groupName, []);
+    groups.get(groupName).push(product);
+  }
+
+  for (const groupName of ["📦 Customer shipping", "🏢 Business shipping", "↩️ Returns"]) {
+    const products = groups.get(groupName) || [];
+    if (!products.length) continue;
+
+    const optgroup = document.createElement("optgroup");
+    optgroup.label = groupName;
+
+    for (const product of products) {
+      const option = document.createElement("option");
+      option.value = product.identifier;
+      option.textContent = product.name || product.identifier;
+      optgroup.appendChild(option);
+    }
+    select.appendChild(optgroup);
   }
 
   renderItemTypes();
+  renderRuleHint();
 }
 
 function renderItemTypes() {
@@ -370,6 +395,79 @@ function selectedServices() {
   return [...document.querySelectorAll(".serviceCheck:checked")].map(x => x.value);
 }
 
+function productRules(product = selectedProduct()) {
+  const rules = {};
+  for (const rule of (product?.rules || [])) {
+    rules[rule.identifier] = rule.value;
+  }
+  return rules;
+}
+
+function numericRule(name) {
+  const value = productRules()[name];
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function renderRuleHint() {
+  const product = selectedProduct();
+  const hint = $("ruleHint");
+  if (!product) {
+    hint.textContent = "Select a product to see its limits.";
+    return;
+  }
+
+  const rules = productRules(product);
+  const bits = [];
+  const maxWeight = numericRule("max_weight");
+  const maxLength = numericRule("max_length");
+  const maxWidth = numericRule("max_width");
+  const maxHeight = numericRule("max_height");
+  const maxLWH = numericRule("max_length_width_height");
+
+  if (maxWeight !== null) bits.push(`max ${maxWeight} kg`);
+  if (maxLength !== null) bits.push(`length ${maxLength} cm`);
+  if (maxWidth !== null) bits.push(`width ${maxWidth} cm`);
+  if (maxHeight !== null) bits.push(`height ${maxHeight} cm`);
+  if (maxLWH !== null) bits.push(`L+W+H ${maxLWH} cm`);
+  if (rules.domestic_only === "true") bits.push("Norway only");
+  if (rules.consignee_mobile_or_email_required === "true") bits.push("phone/email required");
+
+  hint.textContent = bits.length ? `Limits: ${bits.join(" • ")}` : "No published parcel limits for this product.";
+}
+
+function validateProductRules() {
+  const rules = productRules();
+  const weight = Number($("weight").value);
+  const length = Number($("length").value || 0);
+  const width = Number($("width").value || 0);
+  const height = Number($("height").value || 0);
+
+  const checks = [
+    ["max_weight", weight, "weight", "kg"],
+    ["max_length", length, "length", "cm"],
+    ["max_width", width, "width", "cm"],
+    ["max_height", height, "height", "cm"],
+  ];
+
+  for (const [ruleName, actual, label, unit] of checks) {
+    const max = numericRule(ruleName);
+    if (max !== null && actual > max) {
+      throw new Error(`${selectedProduct()?.name || "Selected product"} allows max ${label} ${max} ${unit}; entered ${actual} ${unit}.`);
+    }
+  }
+
+  const maxLWH = numericRule("max_length_width_height");
+  if (maxLWH !== null && (length + width + height) > maxLWH) {
+    throw new Error(`${selectedProduct()?.name || "Selected product"} allows max L+W+H ${maxLWH} cm; entered ${(length + width + height).toFixed(1)} cm.`);
+  }
+
+  if (rules.domestic_only === "true" && $("recCountry").value !== "NO") {
+    throw new Error(`${selectedProduct()?.name || "Selected product"} is domestic-only.`);
+  }
+}
+
 function validateClient() {
   if (!state.selectedOrder) throw new Error("Select a Shopify order first.");
   if (!$("agreementSelect").value) throw new Error("No Profrakt agreement selected.");
@@ -386,6 +484,8 @@ function validateClient() {
   if (!$("recPhone").value.trim() && !$("recEmail").value.trim()) {
     throw new Error("Profrakt requires a recipient phone or email for consignment creation.");
   }
+
+  validateProductRules();
 }
 
 async function ship() {
@@ -489,9 +589,15 @@ function escapeAttr(value) { return escapeHtml(value); }
 
 $("refreshBtn").onclick = loadOrders;
 $("agreementSelect").onchange = renderProducts;
-$("productSelect").onchange = renderItemTypes;
+$("productSelect").onchange = () => {
+  renderItemTypes();
+  renderRuleHint();
+};
 $("exportEnabled").onchange = () => $("exportBox").classList.toggle("hidden", !$("exportEnabled").checked);
 $("shipBtn").onclick = ship;
+for (const id of ["weight", "length", "width", "height"]) {
+  $(id).addEventListener("input", renderRuleHint);
+}
 
 (async function boot() {
   try {
