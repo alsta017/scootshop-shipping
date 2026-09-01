@@ -183,10 +183,30 @@ function log(message, error = false) {
 }
 
 async function api(path, options = {}) {
-  const res = await fetch(`${WORKER_URL}${path}`, options);
+  const res = await fetch(`${WORKER_URL}${path}`, {
+    ...options,
+    credentials: "include",
+    headers: {
+      ...(options.headers || {}),
+    },
+  });
+
+  const contentType = res.headers.get("content-type") || "";
   const text = await res.text();
   let data;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+
+  // If Cloudflare Access returns its login page to fetch(), make the problem obvious.
+  if (typeof data === "string" && (
+      contentType.includes("text/html") ||
+      data.includes("Cloudflare Access") ||
+      data.includes("cloudflareaccess.com")
+  )) {
+    throw new Error(
+      "Cloudflare Access login required. Open the Worker URL directly, sign in, then refresh this page. Also allow third-party cookies for the Worker if your browser blocks them."
+    );
+  }
+
   if (!res.ok) {
     throw new Error(data?.error || `HTTP ${res.status}`);
   }
