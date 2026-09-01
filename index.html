@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScootShop ProFrakt Control Center 👁️</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen p-6 font-sans">
+  <div class="max-w-4xl mx-auto space-y-6">
+    
+    <div class="flex justify-between items-center border-b border-gray-800 pb-4">
+      <div>
+        <h1 class="text-3xl font-extrabold text-amber-500 tracking-tight flex items-center gap-2">
+          ⚡ ScootShop Shipping Command
+        </h1>
+        <p class="text-xs text-gray-400">ProFrakt Direct Integration | Printer ID: 2541</p>
+      </div>
+      <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-semibold">
+        ● Worker Live
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4 shadow-xl">
+        <h2 class="text-lg font-bold text-gray-200 border-b border-gray-800 pb-2">👁️ Order & Recipient</h2>
+        
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Shopify Order ID / Reference</label>
+          <input type="text" id="orderRef" placeholder="e.g. #1042" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Recipient Full Name</label>
+          <input type="text" id="recName" placeholder="Ola Nordmann" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Address Line 1</label>
+          <input type="text" id="recAddress" placeholder="Storgata 1" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Zip Code</label>
+            <input type="text" id="recZip" placeholder="0150" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">City</label>
+            <input type="text" id="recCity" placeholder="Oslo" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Phone Number</label>
+          <input type="text" id="recPhone" placeholder="+47 90000000" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4 shadow-xl">
+        <h2 class="text-lg font-bold text-gray-200 border-b border-gray-800 pb-2">📦 Parcel & Service Config</h2>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Shipping Carrier & Method</label>
+          <select id="serviceCode" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-gray-200 focus:border-amber-500 focus:outline-none">
+            <option value="PAKKE_I_POSTKASSEN">Posten - Pakke i postkassen</option>
+            <option value="SERVICEPAKKE">Posten - Klimanøytral Servicepakke</option>
+            <option value="PA_DOREN">Bring - På Døren</option>
+            <option value="EXPRESS_NORGE">Posten - Express Neste Dag</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Weight (KG)</label>
+            <input type="number" step="0.1" id="weight" value="1.0" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Box Size Preset</label>
+            <select id="boxSize" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
+              <option value="small">Small (Scooter Parts / Grips)</option>
+              <option value="medium">Medium (Wheels / Bars)</option>
+              <option value="large">Large (Complete Scooters / Decks)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bg-amber-950/30 border border-amber-900/50 rounded-lg p-3 space-y-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="nvitToggle" class="w-4 h-4 text-amber-500 rounded border-gray-700 bg-gray-950 focus:ring-amber-500">
+            <span class="text-xs font-bold text-amber-400">Attach NVIT Export / Customs Doc 📄</span>
+          </label>
+          <input type="text" id="nvitRef" placeholder="NVIT Document Reference Number" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-xs focus:border-amber-500 focus:outline-none hidden">
+        </div>
+
+        <button id="printBtn" onclick="triggerPrint()" class="w-full bg-amber-500 hover:bg-amber-400 text-gray-950 font-black py-3 rounded-lg shadow-lg hover:shadow-amber-500/20 transition-all flex justify-center items-center gap-2">
+          🔥 FIRE TO SKYPRINT (PRINTER 2541)
+        </button>
+      </div>
+
+    </div>
+
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+      <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Execution Console</h3>
+      <pre id="consoleLog" class="bg-gray-950 border border-gray-800 rounded p-3 text-xs text-emerald-400 font-mono overflow-x-auto">System Ready. Waiting for dispatch trigger...</pre>
+    </div>
+
+  </div>
+
+  <script>
+    const WORKER_URL = "https://scootshopshipping.kundeservice-dd4.workers.dev";
+
+    // Toggle NVIT reference field visibility
+    document.getElementById('nvitToggle').addEventListener('change', (e) => {
+      document.getElementById('nvitRef').classList.toggle('hidden', !e.target.checked);
+    });
+
+    async function triggerPrint() {
+      const btn = document.getElementById('printBtn');
+      const consoleLog = document.getElementById('consoleLog');
+      
+      btn.disabled = true;
+      btn.innerText = "⚡ TRANSMITTING TO SKYPRINT...";
+      consoleLog.innerText = "Packaging request payload...";
+
+      const payload = {
+        order_ref: document.getElementById('orderRef').value || "MANUAL-01",
+        recipient: {
+          name: document.getElementById('recName').value,
+          address1: document.getElementById('recAddress').value,
+          zip: document.getElementById('recZip').value,
+          city: document.getElementById('recCity').value,
+          country: "NO",
+          phone: document.getElementById('recPhone').value
+        },
+        shipping_method: document.getElementById('serviceCode').value,
+        parcel: {
+          weight: parseFloat(document.getElementById('weight').value),
+          size_preset: document.getElementById('boxSize').value
+        },
+        nvit: {
+          enabled: document.getElementById('nvitToggle').checked,
+          doc_ref: document.getElementById('nvitRef').value || ""
+        }
+      };
+
+      try {
+        const res = await fetch(WORKER_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        
+        if (res.ok) {
+          consoleLog.innerText = `SUCCESS! 💥 Consignment Created: ${data.consignment_id}\nLabel dispatched directly to SkyPrint Printer ID 2541.`;
+        } else {
+          consoleLog.innerText = `ERROR 🖤: ${JSON.stringify(data, null, 2)}`;
+        }
+      } catch (err) {
+        consoleLog.innerText = `NETWORK ERROR 🛑: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "🔥 FIRE TO SKYPRINT (PRINTER 2541)";
+      }
+    }
+  </script>
+</body>
+</html>
