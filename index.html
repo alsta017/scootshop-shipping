@@ -1,197 +1,505 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ScootShop ProFrakt Control Center 👁️</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ScootShop Shipping Control Center</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen font-sans flex">
-  
-  <div class="w-1/3 bg-gray-900 border-r border-gray-800 flex flex-col h-screen">
-    <div class="p-4 border-b border-gray-800">
-      <h2 class="text-xl font-extrabold text-amber-500 flex items-center gap-2">
-        ⚡ Live Orders
-      </h2>
-      <button onclick="fetchOrders()" class="mt-2 w-full bg-gray-800 hover:bg-gray-700 text-xs text-gray-300 py-2 rounded border border-gray-700 transition">
-        🔄 Refresh Queue
-      </button>
-    </div>
-    <div id="orderList" class="flex-1 overflow-y-auto p-4 space-y-3">
-      <p class="text-xs text-gray-500 text-center">Fetching orders from Shopify...</p>
-    </div>
-  </div>
-
-  <div class="w-2/3 p-6 h-screen overflow-y-auto">
-    <div class="max-w-3xl mx-auto space-y-6">
-      
-      <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-        <h1 class="text-3xl font-black text-gray-100">Shipping Command 🖤</h1>
-        <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-semibold">● System Ready</span>
-      </div>
-
-      <div class="grid grid-cols-2 gap-6">
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-xl">
-          <h2 class="text-sm font-bold text-gray-400 border-b border-gray-800 pb-2 mb-4">👁️ RECIPIENT DATA</h2>
-          <div class="space-y-3">
-            <input type="hidden" id="shopifyOrderId">
-            <input type="text" id="orderRef" placeholder="Order Reference (e.g. #1042)" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
-            <input type="text" id="recName" placeholder="Full Name" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
-            <input type="text" id="recAddress" placeholder="Address Line 1" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
-            <div class="grid grid-cols-2 gap-2">
-              <input type="text" id="recZip" placeholder="Zip Code" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
-              <input type="text" id="recCity" placeholder="City" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
-            </div>
-            <input type="text" id="recPhone" placeholder="Phone Number" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
+<body class="bg-gray-950 text-gray-100 min-h-screen font-sans">
+  <div class="min-h-screen flex flex-col lg:flex-row">
+    <aside class="lg:w-[360px] bg-gray-900 border-r border-gray-800 flex flex-col lg:h-screen lg:sticky lg:top-0">
+      <div class="p-4 border-b border-gray-800">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-xl font-black text-amber-400">⚡ Shipping Control</h1>
+            <p class="text-xs text-gray-500 mt-1">Shopify → Profrakt → printer → Shopify</p>
           </div>
+          <span id="statusPill" class="text-[10px] px-2 py-1 rounded-full bg-gray-800 text-gray-400">BOOTING</span>
         </div>
+        <button id="refreshBtn" class="mt-4 w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg py-2 text-sm">
+          🔄 Refresh orders
+        </button>
+      </div>
+      <div id="orderList" class="flex-1 overflow-y-auto p-3 space-y-2">
+        <p class="text-xs text-gray-500 text-center py-8">Loading…</p>
+      </div>
+    </aside>
 
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-xl">
-          <h2 class="text-sm font-bold text-gray-400 border-b border-gray-800 pb-2 mb-4">📦 PARCEL & ROUTING</h2>
-          <div class="space-y-3">
-            <select id="serviceCode" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:border-amber-500 focus:outline-none">
-              <option value="PAKKE_I_POSTKASSEN">Posten - Pakke i postkassen</option>
-              <option value="SERVICEPAKKE">Posten - Klimanøytral Servicepakke</option>
-              <option value="PA_DOREN">Bring - På Døren</option>
-              <option value="EXPRESS_NORGE">Posten - Express Neste Dag</option>
-            </select>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="number" step="0.1" id="weight" placeholder="Weight (KG)" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
-              <select id="boxSize" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
-                <option value="small">Small (Parts)</option>
-                <option value="medium">Medium (Bars)</option>
-                <option value="large">Large (Scooters)</option>
+    <main class="flex-1 p-4 md:p-6">
+      <div class="max-w-5xl mx-auto space-y-5">
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-gray-800 pb-4">
+          <div>
+            <h2 class="text-3xl font-black">Dispatch Console 🖨️</h2>
+            <p class="text-sm text-gray-500">Nothing is hard-coded on the carrier side. Options come from Profrakt.</p>
+          </div>
+          <div id="selectedOrderBadge" class="text-sm text-gray-500">No order selected</div>
+        </header>
+
+        <section class="grid xl:grid-cols-2 gap-5">
+          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+            <h3 class="font-bold text-gray-300 mb-4">👤 Recipient</h3>
+            <input id="shopifyOrderId" type="hidden">
+            <div class="space-y-3">
+              <input id="orderRef" class="field" placeholder="Order reference">
+              <input id="recName" class="field" placeholder="Recipient name">
+              <input id="recAddress" class="field" placeholder="Address line 1">
+              <input id="recAddress2" class="field" placeholder="Address line 2 (optional)">
+              <div class="grid grid-cols-2 gap-2">
+                <input id="recZip" class="field" placeholder="Postcode">
+                <input id="recCity" class="field" placeholder="City">
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <input id="recPhone" class="field" placeholder="Mobile / phone">
+                <input id="recEmail" class="field" placeholder="Email">
+              </div>
+              <select id="recCountry" class="field">
+                <option value="NO">Norway (NO)</option>
               </select>
             </div>
-            
-            <div class="bg-amber-950/30 border border-amber-900/50 rounded p-3 mt-4">
-              <label class="flex items-center gap-2 cursor-pointer mb-2">
-                <input type="checkbox" id="nvitToggle" class="w-4 h-4 text-amber-500 bg-gray-950 focus:ring-amber-500" onchange="document.getElementById('nvitRef').classList.toggle('hidden')">
-                <span class="text-xs font-bold text-amber-400">Append NVIT Customs Data 📄</span>
+          </div>
+
+          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+            <h3 class="font-bold text-gray-300 mb-4">🚚 Profrakt routing</h3>
+            <div class="space-y-3">
+              <label class="label">Carrier / agreement</label>
+              <select id="agreementSelect" class="field"></select>
+
+              <label class="label">Product</label>
+              <select id="productSelect" class="field"></select>
+
+              <label class="label">Item type</label>
+              <select id="itemTypeSelect" class="field"></select>
+
+              <div>
+                <label class="label">Extra services</label>
+                <div id="servicesBox" class="space-y-2 max-h-32 overflow-y-auto rounded-lg bg-gray-950 border border-gray-800 p-3">
+                  <span class="text-xs text-gray-600">Select a product first.</span>
+                </div>
+              </div>
+
+              <label class="flex items-center gap-2 text-sm text-gray-300">
+                <input id="bookingRequest" type="checkbox" class="accent-amber-500">
+                Booking request
               </label>
-              <input type="text" id="nvitRef" placeholder="NVIT Ref #" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-xs focus:border-amber-500 hidden focus:outline-none">
             </div>
           </div>
-        </div>
+        </section>
+
+        <section class="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-gray-300">📦 Parcel</h3>
+            <span class="text-xs text-gray-600">Dimensions are sent to Profrakt in cm</span>
+          </div>
+
+          <div class="grid sm:grid-cols-4 gap-3">
+            <div>
+              <label class="label">Weight (kg)</label>
+              <input id="weight" type="number" min="0.01" step="0.01" class="field" placeholder="1.20">
+            </div>
+            <div>
+              <label class="label">Length (cm)</label>
+              <input id="length" type="number" min="0" step="0.1" class="field" placeholder="30">
+            </div>
+            <div>
+              <label class="label">Width (cm)</label>
+              <input id="width" type="number" min="0" step="0.1" class="field" placeholder="20">
+            </div>
+            <div>
+              <label class="label">Height (cm)</label>
+              <input id="height" type="number" min="0" step="0.1" class="field" placeholder="10">
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <label class="label">Contents / parcel description</label>
+            <input id="description" class="field" maxlength="35" placeholder="Scooter parts">
+          </div>
+        </section>
+
+        <section class="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          <div class="flex items-center gap-3 mb-3">
+            <input id="exportEnabled" type="checkbox" class="accent-amber-500">
+            <label for="exportEnabled" class="font-bold text-gray-300">🌍 International / customs data</label>
+          </div>
+
+          <div id="exportBox" class="hidden grid md:grid-cols-2 gap-3">
+            <input id="iossNumber" class="field" placeholder="IOSS number (optional)">
+            <input id="exportCurrency" class="field" value="NOK" placeholder="Currency">
+            <input id="declaration" class="field" value="Sale" placeholder="Declaration">
+            <label class="flex items-center gap-2 text-sm text-gray-300">
+              <input id="privateRecipient" type="checkbox" checked class="accent-amber-500">
+              Private recipient
+            </label>
+            <textarea id="exportDescription" class="field md:col-span-2 min-h-20" maxlength="35" placeholder="Contents description"></textarea>
+          </div>
+        </section>
+
+        <section class="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          <div class="grid md:grid-cols-2 gap-3">
+            <label class="flex items-center gap-2 text-sm text-gray-300">
+              <input id="notifyCustomer" type="checkbox" class="accent-amber-500">
+              Notify customer about Shopify fulfillment
+            </label>
+            <div id="printerInfo" class="text-sm text-gray-500 md:text-right">Checking printer…</div>
+          </div>
+        </section>
+
+        <button id="shipBtn" class="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-950 font-black py-4 rounded-2xl text-lg shadow-lg">
+          🖨️ CREATE LABEL + PRINT + FULFILL SHOPIFY
+        </button>
+
+        <pre id="consoleLog" class="bg-black border border-gray-800 rounded-2xl p-4 text-xs text-emerald-400 font-mono min-h-36 max-h-72 overflow-auto whitespace-pre-wrap">Ready.</pre>
       </div>
-
-      <button id="printBtn" onclick="triggerPrint()" class="w-full bg-amber-500 hover:bg-amber-400 text-gray-950 font-black py-4 rounded-xl shadow-lg hover:shadow-amber-500/20 transition-all text-lg flex justify-center items-center gap-2">
-        💥 PRINT LABEL & DISPATCH TO WAREHOUSE
-      </button>
-
-      <pre id="consoleLog" class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-xs text-emerald-400 font-mono h-32 overflow-y-auto">Awaiting command...</pre>
-
-    </div>
+    </main>
   </div>
 
-  <script>
-    const WORKER_URL = "https://scootshopshipping.kundeservice-dd4.workers.dev";
-    let activeOrders = [];
+<script>
+const WORKER_URL = "https://scootshopshipping.kundeservice-dd4.workers.dev";
 
-    // Fetch Unfulfilled Orders from Cloudflare -> Shopify
-    async function fetchOrders() {
-      const list = document.getElementById('orderList');
-      list.innerHTML = '<p class="text-xs text-amber-500 text-center animate-pulse">Syncing with Shopify...</p>';
-      try {
-        const res = await fetch(WORKER_URL);
-        const orders = await res.json();
-        activeOrders = orders;
-        
-        list.innerHTML = '';
-        if (orders.length === 0) {
-          list.innerHTML = '<p class="text-xs text-gray-500 text-center">No unfulfilled orders! 🍻</p>';
-          return;
-        }
+const state = {
+  orders: [],
+  agreements: [],
+  selectedOrder: null,
+};
 
-        orders.forEach(order => {
-          const btn = document.createElement('div');
-          btn.className = "bg-gray-950 border border-gray-800 p-3 rounded-lg cursor-pointer hover:border-amber-500 hover:bg-gray-800 transition";
-          btn.innerHTML = `
-            <div class="flex justify-between items-center mb-1">
-              <span class="font-bold text-amber-400">${order.name}</span>
-              <span class="text-xs text-gray-400">${(order.total_weight/1000).toFixed(2)} kg</span>
-            </div>
-            <p class="text-xs text-gray-300 truncate">${order.shipping_address?.name || 'No Shipping Data'}</p>
-          `;
-          btn.onclick = () => loadOrderToForm(order);
-          list.appendChild(btn);
-        });
-      } catch (err) {
-        list.innerHTML = `<p class="text-xs text-red-500 text-center">Error fetching orders: ${err.message}</p>`;
-      }
-    }
+const $ = id => document.getElementById(id);
 
-    // Auto-fill form when an order is clicked
-    function loadOrderToForm(order) {
-      const addr = order.shipping_address || {};
-      document.getElementById('shopifyOrderId').value = order.id;
-      document.getElementById('orderRef').value = order.name;
-      document.getElementById('recName').value = addr.name || '';
-      document.getElementById('recAddress').value = addr.address1 || '';
-      document.getElementById('recZip').value = addr.zip || '';
-      document.getElementById('recCity').value = addr.city || '';
-      document.getElementById('recPhone').value = addr.phone || '';
-      
-      const weightKg = order.total_weight ? order.total_weight / 1000 : 1.0;
-      document.getElementById('weight').value = weightKg;
-      
-      document.getElementById('consoleLog').innerText = `Loaded Order ${order.name}. Awaiting human review...`;
-    }
+const style = document.createElement("style");
+style.textContent = `
+  .field { width:100%; background:#030712; border:1px solid #374151; border-radius:.65rem; padding:.65rem .75rem; font-size:.875rem; outline:none; color:#f3f4f6; }
+  .field:focus { border-color:#f59e0b; box-shadow:0 0 0 1px #f59e0b33; }
+  .label { display:block; color:#6b7280; font-size:.72rem; font-weight:700; margin-bottom:.35rem; text-transform:uppercase; letter-spacing:.04em; }
+`;
+document.head.appendChild(style);
 
-    // Send the customized payload to Cloudflare -> ProFrakt -> SkyPrint
-    async function triggerPrint() {
-      const btn = document.getElementById('printBtn');
-      const consoleLog = document.getElementById('consoleLog');
-      
-      btn.disabled = true;
-      btn.innerText = "⚡ TRANSMITTING...";
+function log(message, error = false) {
+  $("consoleLog").textContent = typeof message === "string"
+    ? message
+    : JSON.stringify(message, null, 2);
+  $("consoleLog").className =
+    `bg-black border border-gray-800 rounded-2xl p-4 text-xs font-mono min-h-36 max-h-72 overflow-auto whitespace-pre-wrap ${error ? "text-red-400" : "text-emerald-400"}`;
+}
 
-      const payload = {
-        order_ref: document.getElementById('orderRef').value,
-        recipient: {
-          name: document.getElementById('recName').value,
-          address1: document.getElementById('recAddress').value,
-          zip: document.getElementById('recZip').value,
-          city: document.getElementById('recCity').value,
-          country: "NO",
-          phone: document.getElementById('recPhone').value
+async function api(path, options = {}) {
+  const res = await fetch(`${WORKER_URL}${path}`, options);
+  const text = await res.text();
+  let data;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (!res.ok) {
+    throw new Error(data?.error || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
+function money(order) {
+  const amount = order?.totalPriceSet?.shopMoney?.amount;
+  const currency = order?.totalPriceSet?.shopMoney?.currencyCode || "";
+  return amount ? `${Number(amount).toFixed(2)} ${currency}` : "";
+}
+
+function renderOrders() {
+  const list = $("orderList");
+  list.innerHTML = "";
+
+  if (!state.orders.length) {
+    list.innerHTML = `<p class="text-xs text-gray-600 text-center py-8">No paid unfulfilled orders 🎉</p>`;
+    return;
+  }
+
+  for (const order of state.orders) {
+    const address = order.shippingAddress || {};
+    const weight = order.currentTotalWeight?.value
+      ? `${Number(order.currentTotalWeight.value).toFixed(2)} kg`
+      : "Weight n/a";
+
+    const el = document.createElement("button");
+    el.className = "w-full text-left bg-gray-950 border border-gray-800 hover:border-amber-500 rounded-xl p-3 transition";
+    el.innerHTML = `
+      <div class="flex justify-between gap-2">
+        <span class="font-black text-amber-400">${escapeHtml(order.name)}</span>
+        <span class="text-[11px] text-gray-500">${escapeHtml(weight)}</span>
+      </div>
+      <div class="text-sm text-gray-300 mt-1 truncate">${escapeHtml(address.name || "No recipient")}</div>
+      <div class="text-[11px] text-gray-600 mt-1">${escapeHtml(money(order))}</div>
+    `;
+    el.onclick = () => selectOrder(order);
+    list.appendChild(el);
+  }
+}
+
+function selectOrder(order) {
+  state.selectedOrder = order;
+  const a = order.shippingAddress || {};
+
+  $("shopifyOrderId").value = order.id;
+  $("orderRef").value = order.name || "";
+  $("recName").value = a.name || [a.firstName, a.lastName].filter(Boolean).join(" ");
+  $("recAddress").value = a.address1 || "";
+  $("recAddress2").value = a.address2 || "";
+  $("recZip").value = a.zip || "";
+  $("recCity").value = a.city || "";
+  $("recPhone").value = a.phone || "";
+  $("recEmail").value = order.email || "";
+  $("recCountry").value = a.countryCodeV2 || "NO";
+
+  const weight = order.currentTotalWeight?.value;
+  $("weight").value = weight ? Number(weight).toFixed(2) : "";
+
+  $("selectedOrderBadge").textContent = `${order.name} • ${a.name || "No recipient"}`;
+  log(`Loaded ${order.name}. Review the address, product and parcel before shipping.`);
+}
+
+async function loadOrders() {
+  $("statusPill").textContent = "SHOPIFY…";
+  $("statusPill").className = "text-[10px] px-2 py-1 rounded-full bg-amber-500/10 text-amber-400";
+  try {
+    state.orders = await api("/orders");
+    renderOrders();
+    $("statusPill").textContent = "READY";
+    $("statusPill").className = "text-[10px] px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400";
+  } catch (err) {
+    $("statusPill").textContent = "ERROR";
+    $("statusPill").className = "text-[10px] px-2 py-1 rounded-full bg-red-500/10 text-red-400";
+    log(`Could not load Shopify orders:\n${err.message}`, true);
+  }
+}
+
+async function loadShippingOptions() {
+  const data = await api("/shipping-options");
+  state.agreements = data.agreements || [];
+
+  const select = $("agreementSelect");
+  select.innerHTML = "";
+
+  if (!state.agreements.length) {
+    select.innerHTML = `<option value="">No Profrakt agreements found</option>`;
+    return;
+  }
+
+  for (const agreement of state.agreements) {
+    const option = document.createElement("option");
+    option.value = agreement.id;
+    option.textContent = `${agreement.carrier?.name || "Unknown carrier"}${agreement.description ? " • " + agreement.description : ""}`;
+    select.appendChild(option);
+  }
+
+  renderProducts();
+}
+
+function selectedAgreement() {
+  return state.agreements.find(a => String(a.id) === String($("agreementSelect").value));
+}
+
+function selectedProduct() {
+  return selectedAgreement()?.products?.find(
+    p => String(p.identifier) === String($("productSelect").value)
+  );
+}
+
+function renderProducts() {
+  const agreement = selectedAgreement();
+  const select = $("productSelect");
+  select.innerHTML = "";
+
+  for (const product of (agreement?.products || [])) {
+    const option = document.createElement("option");
+    option.value = product.identifier;
+    option.textContent = product.name ? `${product.name} (${product.identifier})` : product.identifier;
+    select.appendChild(option);
+  }
+
+  renderItemTypes();
+}
+
+function renderItemTypes() {
+  const product = selectedProduct();
+  const select = $("itemTypeSelect");
+  select.innerHTML = "";
+
+  for (const item of (product?.itemTypes || [])) {
+    const option = document.createElement("option");
+    option.value = item.id;
+    option.textContent = item.nameNo || item.nameEn || item.abbreviation || item.id;
+    option.dataset.abbreviation = item.abbreviation || "";
+    option.dataset.nameEn = item.nameEn || "";
+    option.dataset.nameNo = item.nameNo || "";
+    select.appendChild(option);
+  }
+
+  if (!select.options.length) {
+    select.innerHTML = `<option value="">No item types published for this product</option>`;
+  }
+
+  renderServices();
+}
+
+function renderServices() {
+  const box = $("servicesBox");
+  box.innerHTML = "";
+  const services = selectedProduct()?.services || [];
+
+  if (!services.length) {
+    box.innerHTML = `<span class="text-xs text-gray-600">No additional services for this product.</span>`;
+    return;
+  }
+
+  for (const service of services) {
+    const label = document.createElement("label");
+    label.className = "flex items-center gap-2 text-xs text-gray-300";
+    label.innerHTML = `
+      <input type="checkbox" class="serviceCheck accent-amber-500" value="${escapeAttr(service.identifier)}">
+      <span>${escapeHtml(service.name || service.identifier)}</span>
+    `;
+    box.appendChild(label);
+  }
+}
+
+function selectedItemType() {
+  const option = $("itemTypeSelect").selectedOptions[0];
+  if (!option?.value) return null;
+  return {
+    id: option.value,
+    abbreviation: option.dataset.abbreviation,
+    nameEn: option.dataset.nameEn,
+    nameNo: option.dataset.nameNo,
+  };
+}
+
+function selectedServices() {
+  return [...document.querySelectorAll(".serviceCheck:checked")].map(x => x.value);
+}
+
+function validateClient() {
+  if (!state.selectedOrder) throw new Error("Select a Shopify order first.");
+  if (!$("agreementSelect").value) throw new Error("No Profrakt agreement selected.");
+  if (!$("productSelect").value) throw new Error("No Profrakt product selected.");
+  if (!$("itemTypeSelect").value) throw new Error("This product has no selectable Profrakt item type.");
+
+  const weight = Number($("weight").value);
+  if (!Number.isFinite(weight) || weight <= 0) throw new Error("Enter a parcel weight greater than 0 kg.");
+
+  for (const id of ["recName", "recAddress", "recZip", "recCity"]) {
+    if (!$(id).value.trim()) throw new Error("Complete the recipient address before shipping.");
+  }
+
+  if (!$("recPhone").value.trim() && !$("recEmail").value.trim()) {
+    throw new Error("Profrakt requires a recipient phone or email for consignment creation.");
+  }
+}
+
+async function ship() {
+  const btn = $("shipBtn");
+  btn.disabled = true;
+  btn.textContent = "⚡ CREATING CONSIGNMENT…";
+
+  try {
+    validateClient();
+
+    const payload = {
+      shopifyOrderId: $("shopifyOrderId").value,
+      orderRef: $("orderRef").value.trim(),
+      agreementId: Number($("agreementSelect").value),
+      productId: $("productSelect").value,
+      itemType: selectedItemType(),
+      carrierName: selectedAgreement()?.carrier?.name || "Profrakt",
+      serviceIds: selectedServices(),
+      bookingRequest: $("bookingRequest").checked,
+      recipient: {
+        name: $("recName").value.trim(),
+        address1: $("recAddress").value.trim(),
+        address2: $("recAddress2").value.trim(),
+        postcode: $("recZip").value.trim(),
+        city: $("recCity").value.trim(),
+        country: $("recCountry").value,
+        mobile: $("recPhone").value.trim(),
+        email: $("recEmail").value.trim(),
+      },
+      parcel: {
+        weight: Number($("weight").value),
+        dimensions: {
+          length: $("length").value,
+          width: $("width").value,
+          height: $("height").value,
         },
-        shipping_method: document.getElementById('serviceCode').value,
-        parcel: {
-          weight: parseFloat(document.getElementById('weight').value),
-          size_preset: document.getElementById('boxSize').value
-        },
-        nvit: {
-          enabled: document.getElementById('nvitToggle').checked,
-          doc_ref: document.getElementById('nvitRef').value || ""
-        }
-      };
+        description: $("description").value.trim(),
+      },
+      notifyCustomer: $("notifyCustomer").checked,
+      exportInfo: $("exportEnabled").checked ? {
+        enabled: true,
+        iossNumber: $("iossNumber").value.trim(),
+        exportCurrency: $("exportCurrency").value.trim() || "NOK",
+        declaration: $("declaration").value.trim() || "Sale",
+        privateRecipient: $("privateRecipient").checked,
+        contentsDescription: $("exportDescription").value.trim() || $("description").value.trim(),
+      } : { enabled: false },
+    };
 
-      try {
-        const res = await fetch(WORKER_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+    log("Sending to Cloudflare Worker…");
 
-        const data = await res.json();
-        
-        if (res.ok) {
-          consoleLog.innerText = `SUCCESS! 💥 Consignment Created: ${data.consignment_id}\nLabel dispatched directly to SkyPrint Printer ID 2541.\nReady for next order!`;
-          // Optional: You can remove the order from the UI list here to speed up workflow!
-        } else {
-          consoleLog.innerText = `ERROR 🖤: ${JSON.stringify(data, null, 2)}`;
-        }
-      } catch (err) {
-        consoleLog.innerText = `NETWORK ERROR 🛑: ${err.message}`;
-      } finally {
-        btn.disabled = false;
-        btn.innerText = "💥 PRINT LABEL & DISPATCH TO WAREHOUSE";
-      }
+    const data = await api("/ship", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    log({
+      success: true,
+      order: data.order,
+      consignment: data.consignment,
+      shopify: data.shopify,
+      message: "Profrakt accepted the consignment with autoprint enabled, then Shopify fulfillment was created.",
+    });
+
+    // Remove the shipped order from the queue immediately.
+    state.orders = state.orders.filter(o => o.id !== state.selectedOrder.id);
+    state.selectedOrder = null;
+    renderOrders();
+    $("selectedOrderBadge").textContent = "No order selected";
+  } catch (err) {
+    log(`SHIPMENT FAILED\n\n${err.message}`, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🖨️ CREATE LABEL + PRINT + FULFILL SHOPIFY";
+  }
+}
+
+async function loadPrinters() {
+  try {
+    const data = await api("/printers");
+    const printers = data.printers || [];
+    if (!printers.length) {
+      $("printerInfo").textContent = "⚠️ No Profrakt printer registered";
+      return;
     }
+    const online = printers.filter(p => p.isOnline);
+    $("printerInfo").textContent =
+      `🖨️ ${printers.length} printer${printers.length === 1 ? "" : "s"} registered • ${online.length} online • autoprint uses the first registered printer`;
+  } catch (err) {
+    $("printerInfo").textContent = `Printer lookup failed: ${err.message}`;
+  }
+}
 
-    // Boot up
-    fetchOrders();
-  </script>
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[c]));
+}
+function escapeAttr(value) { return escapeHtml(value); }
+
+$("refreshBtn").onclick = loadOrders;
+$("agreementSelect").onchange = renderProducts;
+$("productSelect").onchange = renderItemTypes;
+$("exportEnabled").onchange = () => $("exportBox").classList.toggle("hidden", !$("exportEnabled").checked);
+$("shipBtn").onclick = ship;
+
+(async function boot() {
+  try {
+    await Promise.all([loadShippingOptions(), loadPrinters(), loadOrders()]);
+  } catch (err) {
+    log(`Startup failed:\n${err.message}`, true);
+  }
+})();
+</script>
 </body>
 </html>
