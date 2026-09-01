@@ -6,126 +6,148 @@
   <title>ScootShop ProFrakt Control Center 👁️</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen p-6 font-sans">
-  <div class="max-w-4xl mx-auto space-y-6">
-    
-    <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-      <div>
-        <h1 class="text-3xl font-extrabold text-amber-500 tracking-tight flex items-center gap-2">
-          ⚡ ScootShop Shipping Command
-        </h1>
-        <p class="text-xs text-gray-400">ProFrakt Direct Integration | Printer ID: 2541</p>
-      </div>
-      <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-semibold">
-        ● Worker Live
-      </span>
+<body class="bg-gray-950 text-gray-100 min-h-screen font-sans flex">
+  
+  <div class="w-1/3 bg-gray-900 border-r border-gray-800 flex flex-col h-screen">
+    <div class="p-4 border-b border-gray-800">
+      <h2 class="text-xl font-extrabold text-amber-500 flex items-center gap-2">
+        ⚡ Live Orders
+      </h2>
+      <button onclick="fetchOrders()" class="mt-2 w-full bg-gray-800 hover:bg-gray-700 text-xs text-gray-300 py-2 rounded border border-gray-700 transition">
+        🔄 Refresh Queue
+      </button>
     </div>
+    <div id="orderList" class="flex-1 overflow-y-auto p-4 space-y-3">
+      <p class="text-xs text-gray-500 text-center">Fetching orders from Shopify...</p>
+    </div>
+  </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="w-2/3 p-6 h-screen overflow-y-auto">
+    <div class="max-w-3xl mx-auto space-y-6">
       
-      <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4 shadow-xl">
-        <h2 class="text-lg font-bold text-gray-200 border-b border-gray-800 pb-2">👁️ Order & Recipient</h2>
-        
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Shopify Order ID / Reference</label>
-          <input type="text" id="orderRef" placeholder="e.g. #1042" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Recipient Full Name</label>
-          <input type="text" id="recName" placeholder="Ola Nordmann" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Address Line 1</label>
-          <input type="text" id="recAddress" placeholder="Storgata 1" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Zip Code</label>
-            <input type="text" id="recZip" placeholder="0150" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">City</label>
-            <input type="text" id="recCity" placeholder="Oslo" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Phone Number</label>
-          <input type="text" id="recPhone" placeholder="+47 90000000" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
-        </div>
+      <div class="flex justify-between items-center border-b border-gray-800 pb-4">
+        <h1 class="text-3xl font-black text-gray-100">Shipping Command 🖤</h1>
+        <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-semibold">● System Ready</span>
       </div>
 
-      <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4 shadow-xl">
-        <h2 class="text-lg font-bold text-gray-200 border-b border-gray-800 pb-2">📦 Parcel & Service Config</h2>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Shipping Carrier & Method</label>
-          <select id="serviceCode" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-gray-200 focus:border-amber-500 focus:outline-none">
-            <option value="PAKKE_I_POSTKASSEN">Posten - Pakke i postkassen</option>
-            <option value="SERVICEPAKKE">Posten - Klimanøytral Servicepakke</option>
-            <option value="PA_DOREN">Bring - På Døren</option>
-            <option value="EXPRESS_NORGE">Posten - Express Neste Dag</option>
-          </select>
+      <div class="grid grid-cols-2 gap-6">
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-xl">
+          <h2 class="text-sm font-bold text-gray-400 border-b border-gray-800 pb-2 mb-4">👁️ RECIPIENT DATA</h2>
+          <div class="space-y-3">
+            <input type="hidden" id="shopifyOrderId">
+            <input type="text" id="orderRef" placeholder="Order Reference (e.g. #1042)" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
+            <input type="text" id="recName" placeholder="Full Name" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
+            <input type="text" id="recAddress" placeholder="Address Line 1" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
+            <div class="grid grid-cols-2 gap-2">
+              <input type="text" id="recZip" placeholder="Zip Code" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
+              <input type="text" id="recCity" placeholder="City" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
+            </div>
+            <input type="text" id="recPhone" placeholder="Phone Number" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
+          </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Weight (KG)</label>
-            <input type="number" step="0.1" id="weight" value="1.0" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Box Size Preset</label>
-            <select id="boxSize" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-amber-500 focus:outline-none">
-              <option value="small">Small (Scooter Parts / Grips)</option>
-              <option value="medium">Medium (Wheels / Bars)</option>
-              <option value="large">Large (Complete Scooters / Decks)</option>
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-xl">
+          <h2 class="text-sm font-bold text-gray-400 border-b border-gray-800 pb-2 mb-4">📦 PARCEL & ROUTING</h2>
+          <div class="space-y-3">
+            <select id="serviceCode" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:border-amber-500 focus:outline-none">
+              <option value="PAKKE_I_POSTKASSEN">Posten - Pakke i postkassen</option>
+              <option value="SERVICEPAKKE">Posten - Klimanøytral Servicepakke</option>
+              <option value="PA_DOREN">Bring - På Døren</option>
+              <option value="EXPRESS_NORGE">Posten - Express Neste Dag</option>
             </select>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="number" step="0.1" id="weight" placeholder="Weight (KG)" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
+              <select id="boxSize" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm focus:border-amber-500 focus:outline-none">
+                <option value="small">Small (Parts)</option>
+                <option value="medium">Medium (Bars)</option>
+                <option value="large">Large (Scooters)</option>
+              </select>
+            </div>
+            
+            <div class="bg-amber-950/30 border border-amber-900/50 rounded p-3 mt-4">
+              <label class="flex items-center gap-2 cursor-pointer mb-2">
+                <input type="checkbox" id="nvitToggle" class="w-4 h-4 text-amber-500 bg-gray-950 focus:ring-amber-500" onchange="document.getElementById('nvitRef').classList.toggle('hidden')">
+                <span class="text-xs font-bold text-amber-400">Append NVIT Customs Data 📄</span>
+              </label>
+              <input type="text" id="nvitRef" placeholder="NVIT Ref #" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-xs focus:border-amber-500 hidden focus:outline-none">
+            </div>
           </div>
         </div>
-
-        <div class="bg-amber-950/30 border border-amber-900/50 rounded-lg p-3 space-y-2">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" id="nvitToggle" class="w-4 h-4 text-amber-500 rounded border-gray-700 bg-gray-950 focus:ring-amber-500">
-            <span class="text-xs font-bold text-amber-400">Attach NVIT Export / Customs Doc 📄</span>
-          </label>
-          <input type="text" id="nvitRef" placeholder="NVIT Document Reference Number" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-xs focus:border-amber-500 focus:outline-none hidden">
-        </div>
-
-        <button id="printBtn" onclick="triggerPrint()" class="w-full bg-amber-500 hover:bg-amber-400 text-gray-950 font-black py-3 rounded-lg shadow-lg hover:shadow-amber-500/20 transition-all flex justify-center items-center gap-2">
-          🔥 FIRE TO SKYPRINT (PRINTER 2541)
-        </button>
       </div>
 
-    </div>
+      <button id="printBtn" onclick="triggerPrint()" class="w-full bg-amber-500 hover:bg-amber-400 text-gray-950 font-black py-4 rounded-xl shadow-lg hover:shadow-amber-500/20 transition-all text-lg flex justify-center items-center gap-2">
+        💥 PRINT LABEL & DISPATCH TO WAREHOUSE
+      </button>
 
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-      <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Execution Console</h3>
-      <pre id="consoleLog" class="bg-gray-950 border border-gray-800 rounded p-3 text-xs text-emerald-400 font-mono overflow-x-auto">System Ready. Waiting for dispatch trigger...</pre>
-    </div>
+      <pre id="consoleLog" class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-xs text-emerald-400 font-mono h-32 overflow-y-auto">Awaiting command...</pre>
 
+    </div>
   </div>
 
   <script>
     const WORKER_URL = "https://scootshopshipping.kundeservice-dd4.workers.dev";
+    let activeOrders = [];
 
-    // Toggle NVIT reference field visibility
-    document.getElementById('nvitToggle').addEventListener('change', (e) => {
-      document.getElementById('nvitRef').classList.toggle('hidden', !e.target.checked);
-    });
+    // Fetch Unfulfilled Orders from Cloudflare -> Shopify
+    async function fetchOrders() {
+      const list = document.getElementById('orderList');
+      list.innerHTML = '<p class="text-xs text-amber-500 text-center animate-pulse">Syncing with Shopify...</p>';
+      try {
+        const res = await fetch(WORKER_URL);
+        const orders = await res.json();
+        activeOrders = orders;
+        
+        list.innerHTML = '';
+        if (orders.length === 0) {
+          list.innerHTML = '<p class="text-xs text-gray-500 text-center">No unfulfilled orders! 🍻</p>';
+          return;
+        }
 
+        orders.forEach(order => {
+          const btn = document.createElement('div');
+          btn.className = "bg-gray-950 border border-gray-800 p-3 rounded-lg cursor-pointer hover:border-amber-500 hover:bg-gray-800 transition";
+          btn.innerHTML = `
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-bold text-amber-400">${order.name}</span>
+              <span class="text-xs text-gray-400">${(order.total_weight/1000).toFixed(2)} kg</span>
+            </div>
+            <p class="text-xs text-gray-300 truncate">${order.shipping_address?.name || 'No Shipping Data'}</p>
+          `;
+          btn.onclick = () => loadOrderToForm(order);
+          list.appendChild(btn);
+        });
+      } catch (err) {
+        list.innerHTML = `<p class="text-xs text-red-500 text-center">Error fetching orders: ${err.message}</p>`;
+      }
+    }
+
+    // Auto-fill form when an order is clicked
+    function loadOrderToForm(order) {
+      const addr = order.shipping_address || {};
+      document.getElementById('shopifyOrderId').value = order.id;
+      document.getElementById('orderRef').value = order.name;
+      document.getElementById('recName').value = addr.name || '';
+      document.getElementById('recAddress').value = addr.address1 || '';
+      document.getElementById('recZip').value = addr.zip || '';
+      document.getElementById('recCity').value = addr.city || '';
+      document.getElementById('recPhone').value = addr.phone || '';
+      
+      const weightKg = order.total_weight ? order.total_weight / 1000 : 1.0;
+      document.getElementById('weight').value = weightKg;
+      
+      document.getElementById('consoleLog').innerText = `Loaded Order ${order.name}. Awaiting human review...`;
+    }
+
+    // Send the customized payload to Cloudflare -> ProFrakt -> SkyPrint
     async function triggerPrint() {
       const btn = document.getElementById('printBtn');
       const consoleLog = document.getElementById('consoleLog');
       
       btn.disabled = true;
-      btn.innerText = "⚡ TRANSMITTING TO SKYPRINT...";
-      consoleLog.innerText = "Packaging request payload...";
+      btn.innerText = "⚡ TRANSMITTING...";
 
       const payload = {
-        order_ref: document.getElementById('orderRef').value || "MANUAL-01",
+        order_ref: document.getElementById('orderRef').value,
         recipient: {
           name: document.getElementById('recName').value,
           address1: document.getElementById('recAddress').value,
@@ -155,7 +177,8 @@
         const data = await res.json();
         
         if (res.ok) {
-          consoleLog.innerText = `SUCCESS! 💥 Consignment Created: ${data.consignment_id}\nLabel dispatched directly to SkyPrint Printer ID 2541.`;
+          consoleLog.innerText = `SUCCESS! 💥 Consignment Created: ${data.consignment_id}\nLabel dispatched directly to SkyPrint Printer ID 2541.\nReady for next order!`;
+          // Optional: You can remove the order from the UI list here to speed up workflow!
         } else {
           consoleLog.innerText = `ERROR 🖤: ${JSON.stringify(data, null, 2)}`;
         }
@@ -163,9 +186,12 @@
         consoleLog.innerText = `NETWORK ERROR 🛑: ${err.message}`;
       } finally {
         btn.disabled = false;
-        btn.innerText = "🔥 FIRE TO SKYPRINT (PRINTER 2541)";
+        btn.innerText = "💥 PRINT LABEL & DISPATCH TO WAREHOUSE";
       }
     }
+
+    // Boot up
+    fetchOrders();
   </script>
 </body>
 </html>
